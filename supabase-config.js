@@ -8,4 +8,4 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 
 // Printer — kailangan pa rin ng lokal na XAMPP para sa ESC/POS printing
 // Kapag nasa kiosk na ang browser at nakabukas ang XAMPP, tatawag ito sa localhost
-const PRINT_ENDPOINT = 'http://192.168.254.126/anniversary/print_receipt.php';
+const PRINT_ENDPOINT = 'http://localhost/anniversary/print_receipt.php';
