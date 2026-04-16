@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Company Anniversary — Guest Registration</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      :root {
+        --bg: #f5f5f0; --surface: #ffffff; --border: #e0dfd8;
+        --accent: #1a1a2e; --accent2: #c8a96e; --text: #1a1a2e;
+        --text-muted: #7a7a8a; --error: #c0392b; --success: #1e6e50;
+        --radius: 12px; --shadow: 0 4px 24px rgba(26,26,46,0.08);
+        --shadow-lg: 0 12px 48px rgba(26,26,46,0.14);
+      }
+      body { font-family: "DM Sans", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+      /* HEADER */
+      header { background: var(--accent); color: #fff; text-align: center; padding: 2.5rem 1.5rem 2rem; position: relative; overflow: hidden; }
+      header::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(200,169,110,0.04) 40px, rgba(200,169,110,0.04) 80px); }
+      .header-badge { display: inline-block; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent2); border: 1px solid rgba(200,169,110,0.4); padding: 0.35rem 1rem; border-radius: 50px; margin-bottom: 1rem; }
+      header h1 { font-family: "DM Serif Display", serif; font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 400; line-height: 1.2; letter-spacing: -0.01em; }
+      header h1 span { color: var(--accent2); }
+      header p { margin-top: 0.6rem; font-size: 0.95rem; color: rgba(255,255,255,0.55); font-weight: 300; }
+
+      /* MAIN */
+      main { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 2.5rem 1rem 3rem; }
+      .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 2.5rem 2rem; width: 100%; max-width: 480px; }
+      .card-title { font-family: "DM Serif Display", serif; font-size: 1.25rem; margin-bottom: 0.3rem; color: var(--accent); }
+      .card-subtitle { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 2rem; }
+
+      /* FORM */
+      .form-group { margin-bottom: 1.25rem; }
+      label { display: block; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.45rem; }
+      label span { color: var(--accent2); margin-left: 2px; }
+      input { width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: "DM Sans", sans-serif; font-size: 0.95rem; color: var(--text); background: #fafaf8; transition: border-color 0.2s, box-shadow 0.2s; outline: none; }
+      input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(200,169,110,0.12); background: #fff; }
+      input::placeholder { color: #b8b8c4; }
+      .field-error { font-size: 0.75rem; color: var(--error); margin-top: 0.35rem; display: none; }
+      .field-error.show { display: block; }
+
+      /* SUBMIT BTN */
+      .btn-submit { width: 100%; padding: 0.9rem 1.5rem; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-family: "DM Sans", sans-serif; font-size: 0.95rem; font-weight: 600; letter-spacing: 0.04em; cursor: pointer; transition: background 0.2s, transform 0.15s; margin-top: 0.5rem; overflow: hidden; }
+      .btn-submit:hover { background: #2d2d4e; transform: translateY(-1px); }
+      .btn-submit:active { transform: translateY(0); }
+      .btn-submit:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+      .btn-submit .spinner { display: none; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; margin: 0 auto; }
+      .btn-submit.loading .btn-text { display: none; }
+      .btn-submit.loading .spinner { display: inline-block; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .server-error { font-size: 0.82rem; color: var(--error); text-align: center; margin-top: 0.8rem; display: none; }
+      .server-error.show { display: block; }
+
+      /* OVERLAY */
+      .overlay { position: fixed; inset: 0; background: rgba(26,26,46,0.55); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 1.5rem; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+      .overlay.active { opacity: 1; pointer-events: all; }
+
+      /* POPUP */
+      .popup { background: var(--surface); border-radius: 16px; box-shadow: var(--shadow-lg); width: 100%; max-width: 480px; padding: 2.5rem 2rem 2rem; transform: translateY(20px) scale(0.97); transition: transform 0.35s cubic-bezier(0.22,1,0.36,1), opacity 0.3s; opacity: 0; text-align: center; }
+      .overlay.active .popup { transform: translateY(0) scale(1); opacity: 1; }
+      .popup-icon { width: 62px; height: 62px; border-radius: 50%; background: linear-gradient(135deg,#1a1a2e 0%,#2d2d4e 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.2rem; }
+      .popup-icon svg { width: 30px; height: 30px; fill: var(--accent2); }
+      .popup h2 { font-family: "DM Serif Display", serif; font-size: 1.55rem; color: var(--accent); margin-bottom: 0.35rem; }
+      .popup-msg { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.6rem; line-height: 1.55; }
+
+      /* GUEST CARD */
+      .guest-card { background: linear-gradient(135deg,var(--accent) 0%,#2d2d4e 100%); border-radius: 12px; padding: 1.6rem 1.5rem; text-align: left; color: #fff; position: relative; overflow: hidden; margin-bottom: 1.2rem; }
+      .guest-card::before { content: ""; position: absolute; top: -30px; right: -30px; width: 130px; height: 130px; border-radius: 50%; border: 2px solid rgba(200,169,110,0.2); }
+      .guest-card::after { content: ""; position: absolute; bottom: -50px; right: 20px; width: 180px; height: 180px; border-radius: 50%; border: 1px solid rgba(200,169,110,0.1); }
+      .gc-badge { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent2); margin-bottom: 0.8rem; }
+      .gc-number { font-family: "DM Serif Display", serif; font-size: 2rem; color: #fff; letter-spacing: 0.02em; margin-bottom: 1.1rem; line-height: 1; }
+      .gc-divider { height: 1px; background: rgba(255,255,255,0.12); margin-bottom: 1rem; }
+      .gc-row { display: flex; flex-direction: column; margin-bottom: 0.65rem; }
+      .gc-row:last-child { margin-bottom: 0; }
+      .gc-label { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 0.1rem; }
+      .gc-value { font-size: 0.9rem; color: #fff; font-weight: 400; }
+      .gc-date { margin-top: 1rem; font-size: 0.68rem; color: rgba(255,255,255,0.35); letter-spacing: 0.06em; }
+
+      /* PRINT STATUS */
+      .print-status { font-size: 0.8rem; min-height: 1.4em; margin-bottom: 1rem; color: var(--text-muted); }
+      .print-status.printing { color: var(--accent2); }
+      .print-status.done { color: var(--success); font-weight: 600; }
+      .print-status.failed { color: var(--error); }
+
+      .btn-close { display: inline-block; padding: 0.7rem 2rem; background: transparent; color: var(--accent); border: 1.5px solid var(--border); border-radius: 8px; font-family: "DM Sans", sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background 0.2s, border-color 0.2s; }
+      .btn-close:hover { background: var(--bg); border-color: var(--accent2); }
+
+      footer { text-align: center; padding: 1.2rem; font-size: 0.75rem; color: var(--text-muted); border-top: 1px solid var(--border); }
+      footer a { color: var(--accent2); text-decoration: none; }
+      footer a:hover { text-decoration: underline; }
+
+      @media (max-width: 520px) {
+        header { padding: 2rem 1rem 1.6rem; }
+        .card { padding: 1.8rem 1.2rem; }
+        .popup { padding: 2rem 1.2rem 1.5rem; }
+        .gc-number { font-size: 1.6rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="header-badge">Ziontech Anniversary 2026</div>
+      <h1>Welcome to Our<br /><span>Celebration</span></h1>
+      <p>Please register to receive your guest pass for the event.</p>
+    </header>
+
+    <main>
+      <div class="card">
+        <div class="card-title">Guest Registration</div>
+        <div class="card-subtitle">All fields are required to complete your registration.</div>
+
+        <div id="regForm">
+          <div class="form-group">
+            <label for="name">Full Name <span>*</span></label>
+            <input type="text" id="name" placeholder="e.g. Juan dela Cruz" autocomplete="name"/>
+            <div class="field-error" id="err-name">Please enter your full name.</div>
+          </div>
+          <div class="form-group">
+            <label for="contact_no">Contact Number <span>*</span></label>
+            <input type="tel" id="contact_no" placeholder="e.g. 09XX XXX XXXX" autocomplete="tel"/>
+            <div class="field-error" id="err-contact">Please enter a valid contact number.</div>
+          </div>
+          <div class="form-group">
+            <label for="email">Email Address <span>*</span></label>
+            <input type="email" id="email" placeholder="e.g. juan@company.com" autocomplete="email"/>
+            <div class="field-error" id="err-email">Please enter a valid email address.</div>
+          </div>
+          <div class="form-group">
+            <label for="company_name">Company Name <span>*</span></label>
+            <input type="text" id="company_name" placeholder="e.g. ABC Corporation" autocomplete="organization"/>
+            <div class="field-error" id="err-company">Please enter your company name.</div>
+          </div>
+
+          <button class="btn-submit" id="submitBtn" type="button" onclick="handleSubmit()">
+            <span class="btn-text">Register Now</span>
+            <span class="spinner"></span>
+          </button>
+          <div class="server-error" id="serverError"></div>
+        </div>
+      </div>
+    </main>
+
+    <footer>&copy; 2026 Ziontech Anniversary &mdash; <a href="login.html">Admin</a></footer>
+
+    <!-- THANK YOU OVERLAY -->
+    <div class="overlay" id="overlay">
+      <div class="popup">
+        <div class="popup-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.59l-3.59-3.59L8.83 11.59l2.17 2.17 5.17-5.17 1.41 1.42L11 16.59z"/>
+          </svg>
+        </div>
+        <h2>Thank You for Coming!</h2>
+        <p class="popup-msg">We're thrilled to have you celebrate with us.<br/>Enjoy the party — here is your guest pass.</p>
+
+        <div class="guest-card">
+          <div class="gc-badge">&#127881; Ziontech Anniversary 2026 — Guest Pass</div>
+          <div class="gc-number" id="gc-number">—</div>
+          <div class="gc-divider"></div>
+          <div class="gc-row"><span class="gc-label">Guest Name</span><span class="gc-value" id="gc-name">—</span></div>
+          <div class="gc-row"><span class="gc-label">Contact No.</span><span class="gc-value" id="gc-contact">—</span></div>
+          <div class="gc-row"><span class="gc-label">Email Address</span><span class="gc-value" id="gc-email">—</span></div>
+          <div class="gc-row"><span class="gc-label">Company</span><span class="gc-value" id="gc-company">—</span></div>
+          <div class="gc-date" id="gc-date">—</div>
+        </div>
+
+        <div class="print-status" id="printStatus"></div>
+        <button class="btn-close" onclick="closePopup()">Done — Enjoy the Party!</button>
+      </div>
+    </div>
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+      // ─── INIT SUPABASE ───
+      const { createClient } = supabase;
+      const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+      // ─── VALIDATION ───
+      function validate() {
+        const name    = document.getElementById('name').value.trim();
+        const contact = document.getElementById('contact_no').value.trim();
+        const email   = document.getElementById('email').value.trim();
+        const company = document.getElementById('company_name').value.trim();
+        const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        toggleErr('err-name',    !name);
+        toggleErr('err-contact', !contact);
+        toggleErr('err-email',   !email || !emailRx.test(email));
+        toggleErr('err-company', !company);
+
+        return !!(name && contact && email && emailRx.test(email) && company);
+      }
+
+      function toggleErr(id, show) {
+        document.getElementById(id).classList.toggle('show', show);
+      }
+
+      // ─── GENERATE GUEST NUMBER ───
+      async function generateGuestNumber() {
+        const today  = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }).replace(/-/g, '');
+        const prefix = `ZTECH-${today}-`;
+
+        const { count } = await sb
+          .from('guests')
+          .select('*', { count: 'exact', head: true })
+          .like('guest_number', `${prefix}%`);
+
+        const seq = String((count || 0) + 1).padStart(4, '0');
+        return `${prefix}${seq}`;
+      }
+
+      // ─── FORMAT DATE ───
+      function formatNow() {
+        return new Date().toLocaleString('en-PH', {
+          timeZone: 'Asia/Manila',
+          month: 'long', day: 'numeric', year: 'numeric',
+          hour: 'numeric', minute: '2-digit', hour12: true
+        });
+      }
+
+      // ─── SUBMIT ───
+      async function handleSubmit() {
+        document.getElementById('serverError').classList.remove('show');
+        if (!validate()) return;
+
+        const btn = document.getElementById('submitBtn');
+        btn.classList.add('loading');
+        btn.disabled = true;
+
+        const name        = document.getElementById('name').value.trim();
+        const contact_no  = document.getElementById('contact_no').value.trim();
+        const email       = document.getElementById('email').value.trim();
+        const company_name = document.getElementById('company_name').value.trim();
+
+        try {
+          const guest_number = await generateGuestNumber();
+
+          const { error } = await sb.from('guests').insert({
+            guest_number,
+            name,
+            contact_no,
+            email,
+            company_name
+          });
+
+          if (error) throw new Error(error.message);
+
+          const data = { guest_number, name, contact_no, email, company_name, registered_at: formatNow() };
+          fillCard(data);
+          showPopup();
+          printReceipt(data);
+
+        } catch (e) {
+          const se = document.getElementById('serverError');
+          se.textContent = e.message || 'Something went wrong. Please try again.';
+          se.classList.add('show');
+        } finally {
+          btn.classList.remove('loading');
+          btn.disabled = false;
+        }
+      }
+
+      // ─── FILL GUEST CARD ───
+      function fillCard(d) {
+        document.getElementById('gc-number').textContent  = d.guest_number;
+        document.getElementById('gc-name').textContent    = d.name;
+        document.getElementById('gc-contact').textContent = d.contact_no;
+        document.getElementById('gc-email').textContent   = d.email;
+        document.getElementById('gc-company').textContent = d.company_name;
+        document.getElementById('gc-date').textContent    = 'Registered: ' + d.registered_at;
+      }
+
+      // ─── PRINT via local XAMPP (ESC/POS — kiosk machine lang) ───
+      async function printReceipt(data) {
+        const statusEl = document.getElementById('printStatus');
+        statusEl.className = 'print-status printing';
+        statusEl.textContent = '🖨 Printing receipt…';
+
+        try {
+          const fd = new FormData();
+          fd.append('name',         data.name);
+          fd.append('contact_no',   data.contact_no);
+          fd.append('email',        data.email);
+          fd.append('company_name', data.company_name);
+          fd.append('guest_number', data.guest_number);
+
+          const res    = await fetch(PRINT_ENDPOINT, { method: 'POST', body: fd });
+          const result = await res.json();
+
+          if (result.success) {
+            statusEl.className   = 'print-status done';
+            statusEl.textContent = '✓ Receipt printed successfully!';
+          } else {
+            statusEl.className   = 'print-status failed';
+            statusEl.textContent = '⚠ Print failed — please see attendant.';
+          }
+        } catch {
+          statusEl.className   = 'print-status failed';
+          statusEl.textContent = '⚠ Print error — please see attendant.';
+        }
+      }
+
+      // ─── POPUP ───
+      function showPopup() {
+        const el = document.getElementById('printStatus');
+        el.className = 'print-status'; el.textContent = '';
+        const overlay = document.getElementById('overlay');
+        overlay.style.display = 'flex';
+        requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('active')));
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closePopup() {
+        const overlay = document.getElementById('overlay');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+        setTimeout(() => { overlay.style.display = 'none'; }, 320);
+        ['name','contact_no','email','company_name'].forEach(id => {
+          document.getElementById(id).value = '';
+        });
+        ['err-name','err-contact','err-email','err-company'].forEach(id => {
+          document.getElementById(id).classList.remove('show');
+        });
+      }
+
+      document.getElementById('overlay').addEventListener('click', function(e) {
+        if (e.target === this) closePopup();
+      });
+
+      ['name','contact_no','email','company_name'].forEach(id => {
+        document.getElementById(id).addEventListener('input', function() {
+          const map = { name:'err-name', contact_no:'err-contact', email:'err-email', company_name:'err-company' };
+          document.getElementById(map[id]).classList.remove('show');
+        });
+      });
+    </script>
+  </body>
+</html>

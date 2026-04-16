@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — Anniversary Guest System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f5f5f0; --surface: #ffffff; --border: #e0dfd8;
+      --accent: #1a1a2e; --accent2: #c8a96e; --text: #1a1a2e;
+      --text-muted: #7a7a8a; --error: #c0392b;
+      --radius: 12px; --shadow: 0 4px 24px rgba(26,26,46,0.08); --nav-h: 60px;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; visibility: hidden; }
+    body.ready { visibility: visible; }
+
+    /* NAV */
+    .dash-nav { background: var(--accent); height: var(--nav-h); display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 12px rgba(0,0,0,0.15); }
+    .dash-nav-brand { font-family: 'DM Serif Display', serif; font-size: 1rem; color: #fff; display: flex; align-items: center; gap: 0.5rem; }
+    .dash-nav-brand span { background: var(--accent2); color: var(--accent); font-family: 'DM Sans', sans-serif; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; padding: 0.2rem 0.5rem; border-radius: 4px; text-transform: uppercase; }
+    .dash-nav-right { display: flex; align-items: center; gap: 1rem; }
+    .admin-badge { font-size: 0.75rem; color: rgba(255,255,255,0.55); display: none; }
+    @media (min-width: 480px) { .admin-badge { display: block; } }
+    .btn-logout { padding: 0.4rem 1rem; border: 1px solid rgba(200,169,110,0.4); border-radius: 6px; color: var(--accent2); background: transparent; font-family: 'DM Sans', sans-serif; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .btn-logout:hover { background: rgba(200,169,110,0.1); }
+
+    /* CONTENT */
+    .dash-content { padding: 2rem 1.2rem; max-width: 1100px; margin: 0 auto; }
+
+    /* STATS */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.3rem 1.5rem; box-shadow: var(--shadow); }
+    .stat-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.4rem; }
+    .stat-val { font-family: 'DM Serif Display', serif; font-size: 2rem; color: var(--accent); line-height: 1; }
+    .stat-val.gold { color: var(--accent2); }
+
+    /* CONTROLS */
+    .controls { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+    .search-wrap { position: relative; flex: 1; min-width: 200px; }
+    .search-wrap svg { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; fill: none; stroke: var(--text-muted); stroke-width: 2; stroke-linecap: round; }
+    #searchInput { width: 100%; padding: 0.68rem 1rem 0.68rem 2.5rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--text); background: var(--surface); outline: none; transition: border-color 0.2s; }
+    #searchInput:focus { border-color: var(--accent2); }
+    #searchInput::placeholder { color: #b8b8c4; }
+    .btn-refresh { padding: 0.68rem 1.2rem; border: 1.5px solid var(--border); border-radius: 8px; background: var(--surface); font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: border-color 0.2s, color 0.2s; white-space: nowrap; }
+    .btn-refresh:hover { border-color: var(--accent2); color: var(--accent); }
+    .btn-export { padding: 0.68rem 1.1rem; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background 0.2s, border-color 0.2s, color 0.2s; white-space: nowrap; }
+    .btn-export-csv { background: var(--surface); border: 1.5px solid var(--border); color: var(--text-muted); }
+    .btn-export-csv:hover { border-color: #27ae60; color: #27ae60; }
+    .btn-export-pdf { background: var(--surface); border: 1.5px solid var(--border); color: var(--text-muted); }
+    .btn-export-pdf:hover { border-color: var(--error); color: var(--error); }
+
+    /* TABLE */
+    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .table-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+    .table-header h3 { font-family: 'DM Serif Display', serif; font-size: 1.05rem; font-weight: 400; }
+    .count-badge { font-size: 0.72rem; font-weight: 600; color: var(--accent2); background: rgba(200,169,110,0.1); border: 1px solid rgba(200,169,110,0.25); padding: 0.25rem 0.7rem; border-radius: 50px; }
+    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; max-height: 500px; overflow-y: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 650px; }
+    thead th { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); padding: 0.75rem 1.2rem; text-align: left; background: #fafaf8; border-bottom: 1px solid var(--border); }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #fafaf8; }
+    td { padding: 0.85rem 1.2rem; font-size: 0.875rem; vertical-align: middle; }
+    .td-number { font-weight: 600; font-size: 0.8rem; color: var(--accent); background: rgba(26,26,46,0.06); padding: 0.25rem 0.6rem; border-radius: 5px; white-space: nowrap; letter-spacing: 0.03em; }
+    .td-name { font-weight: 600; }
+    .td-date { font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; }
+    .btn-del { padding: 0.35rem 0.75rem; border: 1.5px solid rgba(192,57,43,0.25); border-radius: 6px; background: transparent; color: var(--error); font-family: 'DM Sans', sans-serif; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.2s, border-color 0.2s; white-space: nowrap; }
+    .btn-del:hover { background: rgba(192,57,43,0.07); border-color: var(--error); }
+
+    .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+    .empty-state p { font-size: 0.85rem; }
+    .loading-state { text-align: center; padding: 2.5rem; color: var(--text-muted); font-size: 0.85rem; }
+
+    /* DELETE MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(26,26,46,0.5); backdrop-filter: blur(3px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 1.5rem; }
+    .modal-overlay.active { display: flex; }
+    .modal-box { background: var(--surface); border-radius: var(--radius); box-shadow: 0 12px 48px rgba(26,26,46,0.18); padding: 2rem 1.8rem; width: 100%; max-width: 380px; text-align: center; }
+    .modal-icon { width: 52px; height: 52px; border-radius: 50%; background: rgba(192,57,43,0.08); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.4rem; }
+    .modal-box h3 { font-family: 'DM Serif Display', serif; font-size: 1.15rem; margin-bottom: 0.4rem; color: var(--accent); }
+    .modal-box p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5; }
+    .modal-box p strong { color: var(--accent); }
+    .modal-actions { display: flex; gap: 0.75rem; justify-content: center; }
+    .btn-cancel-del { padding: 0.65rem 1.4rem; border: 1.5px solid var(--border); border-radius: 8px; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+    .btn-cancel-del:hover { border-color: var(--accent2); color: var(--accent); }
+    .btn-confirm-del { padding: 0.65rem 1.4rem; border: none; border-radius: 8px; background: var(--error); color: #fff; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .btn-confirm-del:hover { background: #a93226; }
+    .btn-confirm-del:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    @media (max-width: 520px) { .dash-content { padding: 1.2rem 0.8rem; } .stat-val { font-size: 1.6rem; } }
+  </style>
+</head>
+<body>
+  <nav class="dash-nav">
+    <div class="dash-nav-brand">Anniversary Guests <span>Admin</span></div>
+    <div class="dash-nav-right">
+      <span class="admin-badge" id="adminUser"></span>
+      <button class="btn-logout" onclick="handleLogout()">Logout</button>
+    </div>
+  </nav>
+
+  <div class="dash-content">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Guests</div>
+        <div class="stat-val" id="statTotal">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Registered Today</div>
+        <div class="stat-val gold" id="statToday">—</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" placeholder="Search by name, email, company, or number…" oninput="debounceSearch()"/>
+      </div>
+      <button class="btn-refresh" onclick="loadGuests()">↻ Refresh</button>
+      <button class="btn-export btn-export-csv" onclick="exportCSV()">⬇ CSV</button>
+      <button class="btn-export btn-export-pdf" onclick="exportPDF()">⬇ PDF</button>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-header">
+        <h3>Guest List</h3>
+        <span class="count-badge" id="countBadge">Loading…</span>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Guest No.</th><th>Name</th><th>Contact</th>
+              <th>Email</th><th>Company</th><th>Registered</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="guestTableBody">
+            <tr><td colspan="8"><div class="loading-state">Loading guests…</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELETE CONFIRM MODAL -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal-box">
+      <div class="modal-icon">🗑️</div>
+      <h3>Delete Guest?</h3>
+      <p>You are about to delete <strong id="deleteGuestName"></strong>.<br/>This cannot be undone.</p>
+      <div class="modal-actions">
+        <button class="btn-cancel-del" onclick="closeDeleteModal()">Cancel</button>
+        <button class="btn-confirm-del" id="confirmDelBtn" onclick="executeDelete()">Yes, Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script>
+    const { createClient } = supabase;
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    let searchTimer    = null;
+    let guestData      = [];
+    let deleteTargetId = null;
+
+    // ─── AUTH GUARD ───
+    (async () => {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { window.location.replace('login.html'); return; }
+      document.getElementById('adminUser').textContent = session.user.email;
+      document.body.classList.add('ready');
+      loadGuests();
+    })();
+
+    // ─── LOGOUT ───
+    async function handleLogout() {
+      await sb.auth.signOut();
+      window.location.href = 'login.html';
+    }
+
+    // ─── LOAD GUESTS ───
+    async function loadGuests(search = '') {
+      const tbody = document.getElementById('guestTableBody');
+      tbody.innerHTML = '<tr><td colspan="8"><div class="loading-state">Loading…</div></td></tr>';
+
+      try {
+        // Build query
+        let query = sb.from('guests').select('*').order('registered_at', { ascending: false });
+
+        if (search) {
+          query = query.or(
+            `name.ilike.%${search}%,email.ilike.%${search}%,company_name.ilike.%${search}%,guest_number.ilike.%${search}%`
+          );
+        }
+
+        const { data: guests, error } = await query;
+        if (error) throw error;
+
+        guestData = guests;
+
+        // Stats — total and today (Manila time)
+        const { count: total } = await sb.from('guests').select('*', { count: 'exact', head: true });
+
+        const todayMnl = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }); // YYYY-MM-DD
+        const { count: today } = await sb.from('guests')
+          .select('*', { count: 'exact', head: true })
+          .gte('registered_at', `${todayMnl}T00:00:00`)
+          .lt('registered_at',  `${todayMnl}T23:59:59`);
+
+        document.getElementById('statTotal').textContent = total ?? 0;
+        document.getElementById('statToday').textContent = today ?? 0;
+        document.getElementById('countBadge').textContent =
+          `${guests.length} guest${guests.length !== 1 ? 's' : ''}`;
+
+        if (guests.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
+            <p>No guests found${search ? ' matching "' + escHtml(search) + '"' : ''}.</p>
+          </div></td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = guests.map((g, i) => `
+          <tr>
+            <td style="color:var(--text-muted);font-size:0.78rem;">${i + 1}</td>
+            <td><span class="td-number">${escHtml(g.guest_number)}</span></td>
+            <td class="td-name">${escHtml(g.name)}</td>
+            <td>${escHtml(g.contact_no)}</td>
+            <td>${escHtml(g.email)}</td>
+            <td>${escHtml(g.company_name)}</td>
+            <td class="td-date">${formatDate(g.registered_at)}</td>
+            <td><button class="btn-del" onclick="confirmDelete(${g.id}, '${escJs(g.name)}')">🗑 Delete</button></td>
+          </tr>
+        `).join('');
+
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><p>Failed to load guests. Check your connection.</p></div></td></tr>';
+        console.error(e);
+      }
+    }
+
+    // ─── DELETE ───
+    function confirmDelete(id, name) {
+      deleteTargetId = id;
+      document.getElementById('deleteGuestName').textContent = name;
+      document.getElementById('deleteModal').classList.add('active');
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('deleteModal').classList.remove('active');
+      deleteTargetId = null;
+    }
+
+    async function executeDelete() {
+      if (!deleteTargetId) return;
+      const btn = document.getElementById('confirmDelBtn');
+      btn.disabled = true;
+      btn.textContent = 'Deleting…';
+
+      const { error } = await sb.from('guests').delete().eq('id', deleteTargetId);
+
+      if (!error) {
+        closeDeleteModal();
+        loadGuests(document.getElementById('searchInput').value.trim());
+      } else {
+        alert('Delete failed. Please try again.');
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Yes, Delete';
+    }
+
+    document.getElementById('deleteModal').addEventListener('click', function(e) {
+      if (e.target === this) closeDeleteModal();
+    });
+
+    // ─── SEARCH ───
+    function debounceSearch() {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        loadGuests(document.getElementById('searchInput').value.trim());
+      }, 400);
+    }
+
+    // ─── EXPORT CSV ───
+    function exportCSV() {
+      if (!guestData.length) { alert('No guest data to export.'); return; }
+      const headers = ['#','Guest No.','Name','Contact No.','Email','Company','Registered'];
+      const rows = guestData.map((g, i) => [
+        i + 1, g.guest_number, g.name, g.contact_no, g.email, g.company_name, formatDate(g.registered_at)
+      ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+      const csv  = [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url;
+      a.download = `anniversary-guests-${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ─── EXPORT PDF ───
+    function exportPDF() {
+      if (!guestData.length) { alert('No guest data to export.'); return; }
+      const win  = window.open('', '_blank');
+      const rows = guestData.map((g, i) =>
+        `<tr><td>${i+1}</td><td><b>${g.guest_number}</b></td><td>${g.name}</td><td>${g.contact_no}</td><td>${g.email}</td><td>${g.company_name}</td><td>${formatDate(g.registered_at)}</td></tr>`
+      ).join('');
+      win.document.write(`<!DOCTYPE html><html><head><title>Anniversary Guest List</title>
+        <style>
+          body{font-family:Arial,sans-serif;padding:24px;color:#1a1a2e}
+          h1{font-size:18px;margin-bottom:4px}
+          p.sub{font-size:12px;color:#888;margin-bottom:16px}
+          table{width:100%;border-collapse:collapse;font-size:12px}
+          th{background:#1a1a2e;color:#fff;padding:8px 10px;text-align:left}
+          td{padding:7px 10px;border-bottom:1px solid #e0dfd8}
+          tr:nth-child(even) td{background:#f9f9f7}
+          @media print{body{padding:0}}
+        </style></head><body>
+        <h1>&#127881; Ziontech Anniversary 2026 — Guest List</h1>
+        <p class="sub">Exported: ${new Date().toLocaleString('en-PH')} &nbsp;|&nbsp; Total: ${guestData.length} guest(s)</p>
+        <table>
+          <thead><tr><th>#</th><th>Guest No.</th><th>Name</th><th>Contact</th><th>Email</th><th>Company</th><th>Registered</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table></body></html>`);
+      win.document.close();
+      win.focus();
+      setTimeout(() => win.print(), 500);
+    }
+
+    // ─── HELPERS ───
+    function escHtml(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function escJs(str) {
+      return String(str).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    }
+    function formatDate(dt) {
+      if (!dt) return '—';
+      return new Date(dt).toLocaleString('en-PH', {
+        month:'short', day:'numeric', year:'numeric',
+        hour:'numeric', minute:'2-digit', hour12:true
+      });
+    }
+  </script>
+</body>
+</html>
